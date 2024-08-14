@@ -189,21 +189,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 enRuta: cells[7].querySelector('select').value || '-',
                 observacion: cells[8].querySelector('input').value || ''
             };
-        });
+        }).filter(row => row.fecha || row.orden || row.movil || row.reparto || row.detalles || row.horaCarga || row.enRuta || row.observacion); // Filtrar filas vacías
+
         localStorage.setItem('spreadsheetData', JSON.stringify(sampleData));
+        alert('Datos guardados con éxito.');
     }
 
     function clearData() {
-        const rows = document.querySelectorAll('#spreadsheetBody tr');
-        rows.forEach(row => row.remove());
         sampleData = [];
         localStorage.removeItem('spreadsheetData');
+        showSpreadsheet();
     }
 
     function importExcel() {
         importExcelInput.click();
-        importExcelInput.addEventListener('change', handleFileSelect);
     }
+
+    importExcelInput.addEventListener('change', handleFileSelect);
 
     function handleFileSelect(event) {
         const file = event.target.files[0];
@@ -211,26 +213,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            sampleData = jsonData.slice(1).map(row => ({
-                fecha: row[0] || '',
-                orden: row[1] || '',
-                movil: row[2] || '',
-                reparto: row[3] || '',
-                status: row[4] || '-',
-                detalles: row[5] || '',
-                horaCarga: row[6] || '-',
-                enRuta: row[7] || '-',
-                observacion: row[8] || ''
-            }));
+                sampleData = jsonData.slice(1).map(row => {
+                    if (row.every(cell => cell === null || cell === undefined || cell === '')) {
+                        return null;
+                    }
+                    return {
+                        fecha: row[0] || '', // Fecha (A2)
+                        orden: row[4] || '', // Orden (E2)
+                        movil: row[5] || '', // Movil (F2)
+                        reparto: row[1] || '', // Reparto (B2)
+                        status: '-', // Status permanece igual
+                        detalles: row[7] || '', // Detalles (H2)
+                        horaCarga: '-', // Hora de carga permanece igual
+                        enRuta: '-', // En Ruta/En Playa permanece igual
+                        observacion: '' // Observacion permanece igual
+                    };
+                }).filter(row => row !== null); // Filtrar filas en blanco
 
-            localStorage.setItem('spreadsheetData', JSON.stringify(sampleData));
-            showSpreadsheet();
+                localStorage.setItem('spreadsheetData', JSON.stringify(sampleData));
+                showSpreadsheet();
+            } catch (error) {
+                console.error('Error al procesar el archivo Excel:', error);
+            }
         };
         reader.readAsArrayBuffer(file);
     }
