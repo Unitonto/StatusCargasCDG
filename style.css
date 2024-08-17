@@ -1,128 +1,137 @@
-/* Estilo general */
+/* Estilo del body */
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: #333; /* Color de fondo oscuro */
-  color: white; /* Cambia el color del texto a blanco */
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #333; /* Color de fondo oscuro */
+    color: white; /* Color del texto */
 }
 
+/* Estilo del header */
+header {
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    width: 100%; /* Asegura que el header ocupe todo el ancho del viewport */
+    padding: 10px; /* Añade espacio alrededor del logo si es necesario */
+    box-sizing: border-box; /* Incluye el padding en el ancho total */
+    position: relative; /* Posiciona el header en la parte superior */
+    z-index: 10; /* Asegura que el header esté por encima del contenido */
+    background-color: #333; /* Color de fondo del header para evitar superposiciones */
+}
+
+/* Estilo para el logo */
+#logo {
+    max-width: 150px; /* Ajusta el tamaño máximo del logo */
+    height: auto; /* Mantiene la proporción del logo */
+}
+
+/* Contenedor principal para el contenido */
 #content {
-  width: 90%;
-  max-width: 1200px;
-  margin: auto;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  background-color: #444; /* Color de fondo más oscuro */
-  padding: 20px;
-  border-radius: 8px;
+    padding: 20px;
+    margin: 100px auto 0; /* Ajusta el margen superior para que no se superponga con el header */
+    width: 90%;
+    max-width: 1200px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    background-color: #444; /* Color de fondo más oscuro */
+    border-radius: 8px;
 }
 
 /* Estilo del encabezado */
 h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #f4a300; /* Naranja ligero */
+    text-align: center;
+    margin-bottom: 20px;
+    color: #f4a300; /* Naranja ligero */
 }
 
 /* Botones */
 .buttons {
-  text-align: center;
-  margin-bottom: 20px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 .buttons button {
-  margin: 0 10px;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  background-color: #f4a300; /* Naranja ligero */
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+    margin: 0 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #f4a300; /* Naranja ligero */
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .buttons button:hover {
-  background-color: #e39800; /* Naranja más oscuro */
+    background-color: #e39800; /* Naranja más oscuro */
 }
 
 /* Estilo de la tabla */
 .table-wrapper {
-  overflow-x: auto;
-  margin-bottom: 20px;
+    overflow-x: auto;
+    margin-bottom: 20px;
 }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  display: block;
-  max-height: 500px;
-  overflow-y: auto;
+    width: 100%;
+    border-collapse: collapse;
+    display: block;
+    max-height: 500px;
+    overflow-y: auto;
 }
 
 thead th {
-  background-color: #f4a300; /* Naranja ligero */
-  color: white;
-  padding: 10px;
-  text-align: left;
+    background-color: #f4a300; /* Naranja ligero */
+    color: white;
+    padding: 10px;
+    text-align: left;
 }
 
 tbody td {
-  padding: 10px;
-  border: 1px solid #666; /* Borde gris oscuro */
-  text-align: left;
-  color: white; /* Asegura que el texto en las celdas sea blanco */
+    padding: 10px;
+    border: 1px solid #666; /* Borde gris oscuro */
+    text-align: left;
+    color: white; /* Asegura que el texto en las celdas sea blanco */
 }
 
 /* Inputs y selects */
 input[type="text"], select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 5px;
-  border-radius: 4px;
-  background-color: #555; /* Fondo oscuro para inputs */
-  color: white; /* Asegura que el texto en los inputs sea blanco */
-  border: 1px solid #666; /* Borde gris oscuro */
+    width: 100%;
+    box-sizing: border-box;
+    padding: 5px;
+    border-radius: 4px;
+    background-color: #555; /* Fondo oscuro para inputs */
+    color: white; /* Asegura que el texto en los inputs sea blanco */
+    border: 1px solid #666; /* Borde gris oscuro */
 }
 
 select {
-  background-color: #555; /* Fondo oscuro para selects */
-  color: white; /* Asegura que el texto en los selects sea blanco */
-  border: 1px solid #666; /* Borde gris oscuro */
+    background-color: #555; /* Fondo oscuro para selects */
+    color: white; /* Asegura que el texto en los selects sea blanco */
+    border: 1px solid #666; /* Borde gris oscuro */
 }
 
 /* Colores para datos específicos */
 td input[value="No especificado"], td select option[value="No especificado"] {
-  background-color: #f8d7da; /* Fondo rosa claro para datos no especificados */
-  color: #721c24; /* Texto rojo oscuro para datos no especificados */
+    background-color: #f8d7da; /* Fondo rosa claro para datos no especificados */
+    color: #721c24; /* Texto rojo oscuro para datos no especificados */
 }
 
 td input[value*="Estimada"], td select option[value*="Estimada"] {
-  background-color: #fff3cd; /* Fondo amarillo claro para datos estimados */
-  color: #856404; /* Texto amarillo oscuro para datos estimados */
-}
-
-/* Añadir logo */
-#logo {
-  display: block;
-  margin: 20px auto;
-  max-width: 150px;
+    background-color: #fff3cd; /* Fondo amarillo claro para datos estimados */
+    color: #856404; /* Texto amarillo oscuro para datos estimados */
 }
 
 /* Asegura que todos los labels sean blancos */
 label {
-  color: white;
+    color: white;
 }
 
 /* Asegura que los textos dentro de los filtros sean blancos */
 .filters h3 {
-  color: white; /* Color blanco para los títulos de los filtros */
+    color: white; /* Color blanco para los títulos de los filtros */
 }
 
 .filters label {
-  color: white; /* Color blanco para los textos de los filtros */
+    color: white; /* Color blanco para los textos de los filtros */
 }
