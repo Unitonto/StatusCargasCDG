@@ -8,6 +8,7 @@ body {
   align-items: center;
   height: 100vh;
   background-color: #333; /* Color de fondo oscuro */
+  color: white; /* Cambia el color del texto a blanco */
 }
 
 #content {
@@ -74,6 +75,7 @@ tbody td {
   padding: 10px;
   border: 1px solid #666; /* Borde gris oscuro */
   text-align: left;
+  color: white; /* Asegura que el texto en las celdas sea blanco */
 }
 
 /* Inputs y selects */
@@ -82,17 +84,14 @@ input[type="text"], select {
   box-sizing: border-box;
   padding: 5px;
   border-radius: 4px;
-}
-
-input[type="text"] {
   background-color: #555; /* Fondo oscuro para inputs */
-  color: white;
+  color: white; /* Asegura que el texto en los inputs sea blanco */
   border: 1px solid #666; /* Borde gris oscuro */
 }
 
 select {
   background-color: #555; /* Fondo oscuro para selects */
-  color: white;
+  color: white; /* Asegura que el texto en los selects sea blanco */
   border: 1px solid #666; /* Borde gris oscuro */
 }
 
@@ -112,4 +111,18 @@ td input[value*="Estimada"], td select option[value*="Estimada"] {
   display: block;
   margin: 20px auto;
   max-width: 150px;
+}
+
+/* Asegura que todos los labels sean blancos */
+label {
+  color: white;
+}
+
+/* Asegura que los textos dentro de los filtros sean blancos */
+.filters h3 {
+  color: white; /* Color blanco para los títulos de los filtros */
+}
+
+.filters label {
+  color: white; /* Color blanco para los textos de los filtros */
 }

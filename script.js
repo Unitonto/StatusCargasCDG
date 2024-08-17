@@ -1,3 +1,19 @@
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyApWMN7o2BvEsV6RtAopE6_RBwgW77gI5k",
+    authDomain: "pruebastatus-ea9b8.firebaseapp.com",
+    databaseURL: "https://pruebastatus-ea9b8-default-rtdb.firebaseio.com",
+    projectId: "pruebastatus-ea9b8",
+    storageBucket: "pruebastatus-ea9b8.appspot.com",
+    messagingSenderId: "302383298282",
+    appId: "1:302383298282:web:30fffe5d69615c45ee0993",
+    measurementId: "G-8VV37ZJZ9R"
+};
+
+// Inicializa Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 document.addEventListener('DOMContentLoaded', () => {
     const contentDiv = document.getElementById('content');
     const importExcelInput = document.createElement('input');
@@ -5,7 +21,32 @@ document.addEventListener('DOMContentLoaded', () => {
     importExcelInput.style.display = 'none';
     document.body.appendChild(importExcelInput);
 
-    let sampleData = JSON.parse(localStorage.getItem('spreadsheetData')) || [];
+    let sampleData = [];
+
+    function fetchDataFromFirebase() {
+        const dbRef = database.ref('spreadsheetData');
+        dbRef.once('value', (snapshot) => {
+            if (snapshot.exists()) {
+                sampleData = snapshot.val();
+                showSpreadsheet();
+            } else {
+                sampleData = [];
+                showSpreadsheet();
+            }
+        });
+    }
+
+    function saveDataToFirebase() {
+        getUpdatedData(); // Actualiza sampleData antes de guardar
+        database.ref('spreadsheetData').set(sampleData)
+            .then(() => {
+                alert('Datos guardados correctamente en Firebase.');
+            })
+            .catch((error) => {
+                console.error('Error guardando datos en Firebase:', error);
+            });
+    }
+    
 
     function showSpreadsheet() {
         contentDiv.innerHTML = `
@@ -39,10 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td><input type="text" value="${row.reparto || ''}" /></td>
                                 <td>
                                     <select>
-                                        <option value="-" ${row.status === '-' ? 'selected' : ''}>-</option>
+                                        <option value="Pendiente" ${row.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
                                         <option value="Cargado" ${row.status === 'Cargado' ? 'selected' : ''}>Cargado</option>
-                                        <option value="Cargando" ${row.status === 'Cargando' ? 'selected' : ''}>Cargando</option>
-                                        <option value="En espera" ${row.status === 'En espera' ? 'selected' : ''}>En espera</option>
                                     </select>
                                 </td>
                                 <td><input type="text" value="${row.detalles || ''}" /></td>
@@ -66,38 +105,59 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
+        document.getElementById('saveDataBtn').addEventListener('click', saveDataToFirebase);
         document.getElementById('addRowBtn').addEventListener('click', addRow);
-        document.getElementById('saveDataBtn').addEventListener('click', saveData);
         document.getElementById('clearDataBtn').addEventListener('click', clearData);
         document.getElementById('importExcelBtn').addEventListener('click', importExcel);
         document.getElementById('backToStartBtn').addEventListener('click', showStartPage);
     }
+    function getUpdatedData() {
+        const rows = Array.from(document.querySelectorAll('#spreadsheetBody tr'));
+        sampleData = rows.map(row => {
+            const cells = row.querySelectorAll('td input, td select');
+            return {
+                fecha: cells[0].value,
+                orden: cells[1].value,
+                movil: cells[2].value,
+                reparto: cells[3].value,
+                status: cells[4].value,
+                detalles: cells[5].value,
+                horaCarga: cells[6].value,
+                enRuta: cells[7].value,
+                observacion: cells[8].value
+            };
+        });
+    }    
 
     function showStartPage() {
         contentDiv.innerHTML = `
             <h2>Status de Cargas</h2>
             <div class="buttons">
                 <button id="loadDataBtn">Cargar Datos</button>
-                <button id="viewDetailsBtn">Visualizar Detalles</button>
+                <button id="viewFleetVisibilityBtn">Visibilidad Flota</button>
+                <button id="generalVisibilityBtn">Visibilidad General</button>
             </div>
         `;
 
-        document.getElementById('loadDataBtn').addEventListener('click', showSpreadsheet);
-        document.getElementById('viewDetailsBtn').addEventListener('click', showDetails);
+        document.getElementById('loadDataBtn').addEventListener('click', fetchDataFromFirebase);
+        document.getElementById('viewFleetVisibilityBtn').addEventListener('click', showDetails);
+        document.getElementById('generalVisibilityBtn').addEventListener('click', showGeneralVisibility);
     }
 
     function showDetails() {
         const uniqueMovils = [...new Set(sampleData.map(row => row.movil))];
 
         contentDiv.innerHTML = `
-            <h2>Visualizador de Estado y Detalles</h2>
+            <h2>Visibilidad Flota</h2>
+            <div class="buttons">
+                <button id="backToStartBtn">Volver al Inicio</button>
+            </div>
             <label for="movilSelect">Selecciona un móvil:</label>
             <select id="movilSelect">
                 <option value="">--Selecciona un móvil--</option>
                 ${uniqueMovils.map(movil => `<option value="${movil}">${movil}</option>`).join('')}
             </select>
             <div id="movilDetails"></div>
-            <button id="backToStartBtn">Volver al Inicio</button>
         `;
 
         document.getElementById('movilSelect').addEventListener('change', (event) => {
@@ -118,132 +178,193 @@ document.addEventListener('DOMContentLoaded', () => {
                         const estimatedReadyTime = new Date(lastLoadingTime.getTime() + minutesToAdd * 60000);
                         horaCarga = `Horario estimado de carga lista: ${estimatedReadyTime.toTimeString().slice(0, 5)}`;
                     } else {
-                        horaCarga = 'Horario estimado de carga lista';
+                        horaCarga = '-';
                     }
                 }
 
-                const currentDetails = {
-                    status: details.status === '-' ? 'No especificado' : details.status,
-                    tipoRuta: details.detalles === '-' ? 'No especificado' : details.detalles,
-                    horaCarga: horaCarga,
-                    ubicacionActual: details.enRuta === '-' ? 'No especificado' : details.enRuta
-                };
-
                 document.getElementById('movilDetails').innerHTML = `
-                    ${horaCarga.startsWith('Horario estimado') ? '' : `<p>Hora de Carga: ${currentDetails.horaCarga}</p>`}
-                    <p>Estado Actual: ${currentDetails.status}</p>
-                    <p>Tipo de Ruta: ${currentDetails.tipoRuta}</p>
-                    ${horaCarga.startsWith('Horario estimado') ? `<p>${horaCarga}</p>` : ''}
-                    <p>Ubicación Actual: ${currentDetails.ubicacionActual}</p>
+                    <p><strong>Movil:</strong> ${details.movil || 'No especificado'}</p>
+                    <p><strong>Status:</strong> ${details.status || 'No especificado'}</p>
+                    <p><strong>Detalles:</strong> ${details.detalles || 'No especificado'}</p>
+                    <p><strong>Hora de Carga:</strong> ${horaCarga || '-'}</p>
+                    <p><strong>En Ruta/En Playa:</strong> ${details.enRuta || 'No especificado'}</p>
+                    <p><strong>Observación:</strong> ${details.observacion || '-'}</p>
                 `;
-            } else {
-                document.getElementById('movilDetails').innerHTML = '<p>No se encontraron detalles para el móvil seleccionado.</p>';
             }
         });
 
         document.getElementById('backToStartBtn').addEventListener('click', showStartPage);
     }
 
-    function addRow() {
-        const tableBody = document.getElementById('spreadsheetBody');
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td><input type="text" placeholder="DD/MM/AAAA" /></td>
-            <td><input type="text" /></td>
-            <td><input type="text" /></td>
-            <td><input type="text" /></td>
-            <td>
-                <select>
-                    <option value="-">-</option>
-                    <option value="Cargado">Cargado</option>
-                    <option value="Cargando">Cargando</option>
-                    <option value="En espera">En espera</option>
-                </select>
-            </td>
-            <td><input type="text" /></td>
-            <td><input type="text" placeholder="HH:MM" /></td>
-            <td>
-                <select>
-                    <option value="-">-</option>
-                    <option value="En Ruta">En Ruta</option>
-                    <option value="En Playa">En Playa</option>
-                </select>
-            </td>
-            <td><input type="text" /></td>
+    function showGeneralVisibility() {
+        const uniqueMovils = [...new Set(sampleData.map(row => row.movil))];
+
+        contentDiv.innerHTML = `
+            <h2>Visibilidad General</h2>
+            <div class="buttons">
+                <button id="backToStartBtn">Volver al Inicio</button>
+            </div>
+            <label for="filterOL">Filtrar por OL:</label>
+            <select id="filterOL">
+                <option value="">Todos</option>
+                <option value="J">Jauser</option>
+                <option value="E">Eminsa</option>
+                <option value="L">Lemi</option>
+            </select>
+            <label for="filterStatus">Filtrar por estado:</label>
+            <select id="filterStatus">
+                <option value="">Todos</option>
+                <option value="Cargado">Cargado</option>
+                <option value="Pendiente">Pendiente</option>
+            </select>
+            <button id="clearFiltersBtn">Limpiar filtros</button>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Movil</th>
+                            <th>Status</th>
+                            <th>Detalles</th>
+                            <th>Hora de Carga</th>
+                            <th>En Ruta/En Playa</th>
+                            <th>Observación</th>
+                            <th>Hora estimada de carga</th>
+                        </tr>
+                    </thead>
+                    <tbody id="generalVisibilityBody">
+                        ${sampleData.map(row => `
+                            <tr>
+                                <td>${row.movil || ''}</td>
+                                <td>${row.status || ''}</td>
+                                <td>${row.detalles || ''}</td>
+                                <td>${row.horaCarga || ''}</td>
+                                <td>${row.enRuta || ''}</td>
+                                <td>${row.observacion || ''}</td>
+                                <td>${row.horaCarga === '-' ? calculateEstimatedTime(row) : row.horaCarga || ''}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
         `;
-        tableBody.appendChild(newRow);
-    }
 
-    function saveData() {
-        const rows = document.querySelectorAll('#spreadsheetBody tr');
-        sampleData = Array.from(rows).map(row => {
-            const cells = row.querySelectorAll('td');
-            return {
-                fecha: cells[0].querySelector('input').value || '',
-                orden: cells[1].querySelector('input').value || '',
-                movil: cells[2].querySelector('input').value || '',
-                reparto: cells[3].querySelector('input').value || '',
-                status: cells[4].querySelector('select').value || '-',
-                detalles: cells[5].querySelector('input').value || '',
-                horaCarga: cells[6].querySelector('input').value || '-',
-                enRuta: cells[7].querySelector('select').value || '-',
-                observacion: cells[8].querySelector('input').value || ''
-            };
-        }).filter(row => row.fecha || row.orden || row.movil || row.reparto || row.detalles || row.horaCarga || row.enRuta || row.observacion); // Filtrar filas vacías
-
-        localStorage.setItem('spreadsheetData', JSON.stringify(sampleData));
-        alert('Datos guardados con éxito.');
-    }
-
-    function clearData() {
-        sampleData = [];
-        localStorage.removeItem('spreadsheetData');
-        showSpreadsheet();
+        document.getElementById('filterOL').addEventListener('change', filterData);
+        document.getElementById('filterStatus').addEventListener('change', filterData);
+        document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+        document.getElementById('backToStartBtn').addEventListener('click', showStartPage);
     }
 
     function importExcel() {
         importExcelInput.click();
+        importExcelInput.addEventListener('change', handleFile, { once: true });
     }
 
-    importExcelInput.addEventListener('change', handleFileSelect);
-
-    function handleFileSelect(event) {
+    function handleFile(event) {
         const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
+        if (file && file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            const reader = new FileReader();
+            reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
+                const sheetName = 'Orden de Prioridades';
                 const sheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-                sampleData = jsonData.slice(1).map(row => {
-                    if (row.every(cell => cell === null || cell === undefined || cell === '')) {
-                        return null;
-                    }
-                    return {
-                        fecha: row[0] || '', // Fecha (A2)
-                        orden: row[4] || '', // Orden (E2)
-                        movil: row[5] || '', // Movil (F2)
-                        reparto: row[1] || '', // Reparto (B2)
-                        status: '-', // Status permanece igual
-                        detalles: row[7] || '', // Detalles (H2)
-                        horaCarga: '-', // Hora de carga permanece igual
-                        enRuta: '-', // En Ruta/En Playa permanece igual
-                        observacion: '' // Observacion permanece igual
-                    };
-                }).filter(row => row !== null); // Filtrar filas en blanco
-
-                localStorage.setItem('spreadsheetData', JSON.stringify(sampleData));
+                const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                json.shift(); // Remove header row
+                sampleData = json.map(row => ({
+                    fecha: row[0] || '',
+                    orden: row[4] || '',
+                    movil: row[5] || '',
+                    reparto: row[1] || '',
+                    detalles: row[7] || '',
+                    status: 'Pendiente', // Default status
+                    horaCarga: '-',
+                    enRuta: '-',
+                    observacion: ''
+                }));
                 showSpreadsheet();
-            } catch (error) {
-                console.error('Error al procesar el archivo Excel:', error);
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            alert('Por favor, selecciona un archivo Excel válido.');
+        }
+    }
+
+    function addRow() {
+        sampleData.push({
+            fecha: '',
+            orden: '',
+            movil: '',
+            reparto: '',
+            detalles: '',
+            status: 'Pendiente',
+            horaCarga: '',
+            enRuta: '-',
+            observacion: ''
+        });
+        showSpreadsheet();
+    }
+
+    function clearData() {
+        if (confirm('¿Estás seguro de que deseas limpiar todos los datos?')) {
+            sampleData = [];
+            showSpreadsheet();
+        }
+    }
+
+    function filterData() {
+        const olFilter = document.getElementById('filterOL').value;
+        const statusFilter = document.getElementById('filterStatus').value;
+
+        const filteredData = sampleData.filter(row => {
+            let isValid = true;
+
+            if (olFilter && olFilter !== 'G') {
+                isValid = row.movil.startsWith(olFilter);
+            } else if (olFilter === 'G') {
+                isValid = !['J', 'E', 'L'].includes(row.movil.charAt(0));
             }
-        };
-        reader.readAsArrayBuffer(file);
+
+            if (statusFilter) {
+                isValid = isValid && row.status === statusFilter;
+            }
+
+            return isValid;
+        });
+
+        const tbody = document.getElementById('generalVisibilityBody');
+        tbody.innerHTML = filteredData.map(row => `
+            <tr>
+                <td>${row.movil || ''}</td>
+                <td>${row.status || ''}</td>
+                <td>${row.detalles || ''}</td>
+                <td>${row.horaCarga || ''}</td>
+                <td>${row.enRuta || ''}</td>
+                <td>${row.observacion || ''}</td>
+                <td>${row.horaCarga === '-' ? calculateEstimatedTime(row) : row.horaCarga || ''}</td>
+            </tr>
+        `).join('');
+    }
+
+    function clearFilters() {
+        document.getElementById('filterOL').value = '';
+        document.getElementById('filterStatus').value = '';
+        filterData();
+    }
+
+    function calculateEstimatedTime(row) {
+        const rowIndex = sampleData.indexOf(row);
+        const previousRows = sampleData.slice(0, rowIndex);
+        const lastLoadingRow = previousRows.slice().reverse().find(row => row.horaCarga && row.horaCarga !== '-' && row.horaCarga !== 'No especificado');
+
+        if (lastLoadingRow) {
+            const lastLoadingIndex = previousRows.indexOf(lastLoadingRow);
+            const minutesToAdd = 13 * (rowIndex - lastLoadingIndex);
+            const lastLoadingTime = new Date(`1970-01-01T${lastLoadingRow.horaCarga}:00`);
+            const estimatedReadyTime = new Date(lastLoadingTime.getTime() + minutesToAdd * 60000);
+            return `${estimatedReadyTime.toTimeString().slice(0, 5)}`;
+        } else {
+            return '';
+        }
     }
 
     showStartPage();
